@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2002-2020   The FreeCol Team
+ *  Copyright (C) 2002-2019   The FreeCol Team
  *
  *  This file is part of FreeCol.
  *
@@ -44,7 +44,6 @@ import net.sf.freecol.common.model.Ability;
 import net.sf.freecol.common.model.AbstractUnit;
 import net.sf.freecol.common.model.Building;
 import net.sf.freecol.common.model.Colony;
-import net.sf.freecol.common.model.ColonyTradeItem;
 import static net.sf.freecol.common.model.Constants.*;
 import net.sf.freecol.common.model.DiplomaticTrade;
 import net.sf.freecol.common.model.DiplomaticTrade.TradeContext;
@@ -2411,19 +2410,13 @@ public class EuropeanAIPlayer extends MissionAIPlayer {
             // Synthetic event
             result = TradeStatus.PROPOSE_TRADE;
         } else {
-            int unacceptable = 0, value = 0, colonies = 0;
+            int unacceptable = 0, value = 0;
             for (TradeItem item : agreement.getItems()) {
                 if (item instanceof StanceTradeItem) {
                     getNationSummary(other); // Freshen the name summary cache
                 }                    
                 int score = item.evaluateFor(player);
-                if (item instanceof ColonyTradeItem) {
-                    if (item.getSource() == player) {
-                        colonies++;
-                    } else {
-                        colonies--;
-                    }
-                } else if (item instanceof StanceTradeItem) {
+                if (item instanceof StanceTradeItem) {
                     // Handle some special cases
                     switch (item.getStance()) {
                     case ALLIANCE: case CEASE_FIRE:
@@ -2452,11 +2445,7 @@ public class EuropeanAIPlayer extends MissionAIPlayer {
             }
             lb.add(".");
 
-            if (colonies > 0
-                && colonies > player.getSettlementCount() - Colony.TRADE_MARGIN) {
-                result = rejectAgreement(peace, agreement);
-                lb.add("  Too many (", colonies, ") colonies lost.");
-            } else if (unacceptable == 0 && value >= 0) { // Accept if all good
+            if (unacceptable == 0 && value >= 0) { // Accept if all good
                 result = TradeStatus.ACCEPT_TRADE;
                 lb.add("  All accepted at ", value, ".");
             } else { // If too many items are unacceptable, reject

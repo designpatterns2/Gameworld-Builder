@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2002-2020   The FreeCol Team
+ *  Copyright (C) 2002-2019   The FreeCol Team
  *
  *  This file is part of FreeCol.
  *
@@ -138,9 +138,6 @@ public class Unit extends GoodsLocation
      */
     public static final int MANY_TURNS = 10000;
 
-    /** Default value of unpriced units, used in evaluate_for. */
-    public static final int DEFAULT_UNIT_VALUE = 500;
-    
     public static final String CARGO_CHANGE = "CARGO_CHANGE";
     public static final String MOVE_CHANGE = "MOVE_CHANGE";
     public static final String ROLE_CHANGE = "ROLE_CHANGE";
@@ -3832,9 +3829,7 @@ public class Unit extends GoodsLocation
      */
     public int evaluateFor(Player player) {
         final Europe europe = player.getEurope();
-        if (europe == null) return DEFAULT_UNIT_VALUE;
-        int price = europe.getUnitPrice(getType());
-        return (price == UNDEFINED) ? DEFAULT_UNIT_VALUE : price;
+        return (europe == null) ? 500 : europe.getUnitPrice(getType());
     }
 
     // @compat 0.11.0
@@ -4739,6 +4734,7 @@ public class Unit extends GoodsLocation
         Player oldOwner = owner;
         owner = xr.findFreeColGameObject(game, OWNER_TAG,
                                          Player.class, (Player)null, true);
+        if (xr.shouldIntern()) game.checkOwners(this, oldOwner);
 
         this.type = xr.getType(spec, UNIT_TYPE_TAG,
                                UnitType.class, (UnitType)null);
@@ -4800,9 +4796,6 @@ public class Unit extends GoodsLocation
         // Fix changes to production
         WorkLocation wl = getWorkLocation();
         if (wl != null && wl != oldWorkLocation) wl.updateProductionType();
-
-        // Check ownership as late as possible
-        if (xr.shouldIntern()) game.checkOwners(this, oldOwner);
     }
 
     /**
@@ -4871,11 +4864,7 @@ public class Unit extends GoodsLocation
             sb.append(" uninitialized");
         } else if (isDisposed()) {
             sb.append(" disposed");
-        } else if (owner == null) {
-            sb.append(" unowned");
-        } else if (getType() == null) {
-            sb.append(" untyped");
-        } else {            
+        } else {
             sb.append(' ').append(lastPart(owner.getNationId(), "."))
                 .append(' ').append(getType().getSuffix());
             if (!hasDefaultRole()) {
